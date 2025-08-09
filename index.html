@@ -73,14 +73,25 @@
     function startGame() {
       player = { x: 200, y: 500, width: 40, height: 40, dy: 0 };
       platforms = [];
-      for (let i = 0; i < 6; i++) {
-        platforms.push({
-          x: Math.random() * 350,
-          y: i * 100,
-          width: 50,
-          height: 10
-        });
-      }
+
+// First platform under the player
+platforms.push({
+  x: player.x - 10,
+  y: player.y + player.height,
+  width: 60,
+  height: 10
+});
+
+// The rest of the platforms
+for (let i = 1; i < 6; i++) {
+  platforms.push({
+    x: Math.random() * 350,
+    y: i * 100,
+    width: 50,
+    height: 10
+  });
+}
+
       score = 0;
       gameOver = false;
       overlay.style.display = "none";
