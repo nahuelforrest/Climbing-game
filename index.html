@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Climbing Game</title>
+  <style>
+    body {
+      margin: 0;
+      background: #87ceeb;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: #87ceeb;
+    }
+    #overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      display: none;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 20px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+  <div id="overlay">
+    <div id="finalScore">Score: 0</div>
+    <button id="restartBtn">Restart</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const overlay = document.getElementById("overlay");
+    const finalScoreDisplay = document.getElementById("finalScore");
+    const restartBtn = document.getElementById("restartBtn");
+
+    // Load images
+    const climberImg = new Image();
+    climberImg.src = "https://i.ibb.co/SQnLk0B/climber.png"; // replace with your own climber image
+
+    const rockImg = new Image();
+    rockImg.src = "https://i.ibb.co/zQ6nyfV/rock.png"; // replace with your own rock image
+
+    // Game state
+    let player, platforms, score, gameOver;
+    let gravity = 0.3;
+    let jumpPower = -8;
+    let keys = {};
+
+    document.addEventListener("keydown", (e) => keys[e.code] = true);
+    document.addEventListener("keyup", (e) => keys[e.code] = false);
+    restartBtn.addEventListener("click", startGame);
+
+    function startGame() {
+      player = { x: 200, y: 500, width: 40, height: 40, dy: 0 };
+      platforms = [];
+      for (let i = 0; i < 6; i++) {
+        platforms.push({
+          x: Math.random() * 350,
+          y: i * 100,
+          width: 50,
+          height: 10
+        });
+      }
+      score = 0;
+      gameOver = false;
+      overlay.style.display = "none";
+      gameLoop();
+    }
+
+    function update() {
+      if (gameOver) return;
+
+      // Move left/right
+      if (keys["ArrowLeft"]) player.x -= 3;
+      if (keys["ArrowRight"]) player.x += 3;
+
+      // Gravity
+      player.dy += gravity;
+      player.y += player.dy;
+
+      // Collision with platforms
+      platforms.forEach(p => {
+        if (
+          player.x < p.x + p.width &&
+          player.x + player.width > p.x &&
+          player.y + player.height > p.y &&
+          player.y + player.height < p.y + p.height + player.dy
+        ) {
+          player.dy = jumpPower;
+        }
+      });
+
+      // Scroll platforms down as player climbs
+      if (player.y < 200) {
+        player.y = 200;
+        score++;
+        platforms.forEach(p => p.y += Math.abs(player.dy));
+      }
+
+      // Remove platforms off screen, add new ones
+      platforms = platforms.filter(p => p.y < 600);
+      while (platforms.length < 6) {
+        platforms.push({
+          x: Math.random() * 350,
+          y: -10,
+          width: 50,
+          height: 10
+        });
+      }
+
+      // Game Over if player falls
+      if (player.y > 600) {
+        endGame();
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw player
+      ctx.drawImage(climberImg, player.x, player.y, player.width, player.height);
+
+      // Draw platforms as rocks
+      platforms.forEach(p => {
+        ctx.drawImage(rockImg, p.x, p.y, p.width, p.height);
+      });
+
+      // Draw score
+      ctx.fillStyle = "black";
+      ctx.font = "20px Arial";
+      ctx.fillText("Score: " + score, 10, 20);
+    }
+
+    function endGame() {
+      gameOver = true;
+      finalScoreDisplay.textContent = "Score: " + score;
+      overlay.style.display = "flex";
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      if (!gameOver) requestAnimationFrame(gameLoop);
+    }
+
+    // Start the game
+    startGame();
+  </script>
+</body>
+</html>
