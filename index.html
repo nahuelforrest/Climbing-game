@@ -14,7 +14,7 @@
     canvas {
       display: block;
       margin: auto;
-      background: #a0522d; /* Brownish for rock wall */
+      background: #a0522d;
       background-image: linear-gradient(
         to bottom,
         #8b5a2b 0%,
@@ -79,174 +79,158 @@
   </div>
 
   <script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
+    window.onload = function() {
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
 
-    const overlay = document.getElementById("overlay");
-    const finalScoreDisplay = document.getElementById("finalScore");
-    const restartBtn = document.getElementById("restartBtn");
+      const overlay = document.getElementById("overlay");
+      const finalScoreDisplay = document.getElementById("finalScore");
+      const restartBtn = document.getElementById("restartBtn");
 
-    const staminaBar = document.getElementById("staminaBar");
+      const staminaBar = document.getElementById("staminaBar");
 
-    // Player variables
-    let player, platforms, score, gameOver, stamina;
-    const maxStamina = 100;
-    const staminaDrainRate = 0.2; // stamina lost per frame while moving
-    const staminaJumpCost = 10;
-    const staminaRecoverRate = 0.5; // stamina recovered per frame when resting
-    let keys = {};
+      // Player variables
+      let player, platforms, score, gameOver, stamina;
+      const maxStamina = 100;
+      const staminaDrainRate = 0.2;
+      const staminaJumpCost = 10;
+      const staminaRecoverRate = 0.5;
+      let keys = {};
 
-    document.addEventListener("keydown", (e) => keys[e.code] = true);
-    document.addEventListener("keyup", (e) => keys[e.code] = false);
-    restartBtn.addEventListener("click", startGame);
+      document.addEventListener("keydown", (e) => keys[e.code] = true);
+      document.addEventListener("keyup", (e) => keys[e.code] = false);
+      restartBtn.addEventListener("click", startGame);
 
-    // Platform colors
-    const normalPlatformColor = "#4CAF50";
-    const restSpotColor = "#b5651d";
+      const normalPlatformColor = "#4CAF50";
+      const restSpotColor = "#b5651d";
 
-    function startGame() {
-      player = { x: 200, y: 500, width: 40, height: 40, dy: 0 };
-      stamina = maxStamina;
-      platforms = [];
+      function startGame() {
+        player = { x: 200, y: 500, width: 40, height: 40, dy: 0 };
+        stamina = maxStamina;
+        platforms = [];
 
-      // First platform under player (normal)
-      platforms.push({
-        x: player.x - 10,
-        y: player.y + player.height,
-        width: 60,
-        height: 10,
-        isRestSpot: false,
-      });
-
-      // Add some normal platforms and rest spots
-      for (let i = 1; i < 6; i++) {
         platforms.push({
-          x: Math.random() * 350,
-          y: i * 100,
-          width: 50,
+          x: player.x - 10,
+          y: player.y + player.height,
+          width: 60,
           height: 10,
-          isRestSpot: Math.random() < 0.3 // ~30% chance of rest spot
+          isRestSpot: false,
         });
-      }
 
-      score = 0;
-      gameOver = false;
-      overlay.style.display = "none";
-      staminaBar.style.width = "100%";
-      gameLoop();
-    }
-
-    function update() {
-      if (gameOver) return;
-
-      // Drain stamina when moving left/right
-      if ((keys["ArrowLeft"] || keys["ArrowRight"]) && stamina > 0) {
-        stamina -= staminaDrainRate;
-        if (stamina < 0) stamina = 0;
-      }
-
-      // Move left/right only if stamina > 0
-      if (stamina > 0) {
-        if (keys["ArrowLeft"]) player.x -= 3;
-        if (keys["ArrowRight"]) player.x += 3;
-      }
-
-      // Gravity
-      player.dy += 0.3;
-      player.y += player.dy;
-
-      // Collision with platforms
-      let onPlatform = false;
-      platforms.forEach(p => {
-        if (
-          player.x < p.x + p.width &&
-          player.x + player.width > p.x &&
-          player.y + player.height > p.y &&
-          player.y + player.height < p.y + p.height + player.dy
-        ) {
-          player.dy = -8;
-
-          onPlatform = true;
-
-          // If on rest spot, recover stamina
-          if (p.isRestSpot) {
-            stamina += staminaRecoverRate;
-            if (stamina > maxStamina) stamina = maxStamina;
-          }
+        for (let i = 1; i < 6; i++) {
+          platforms.push({
+            x: Math.random() * 350,
+            y: i * 100,
+            width: 50,
+            height: 10,
+            isRestSpot: Math.random() < 0.3,
+          });
         }
-      });
 
-      // If player tries to jump but no stamina, no jump
-      if (keys["Space"] && stamina >= staminaJumpCost && onPlatform) {
-        player.dy = -12;
-        stamina -= staminaJumpCost;
+        score = 0;
+        gameOver = false;
+        overlay.style.display = "none";
+        staminaBar.style.width = "100%";
+        gameLoop();
       }
 
-      // Scroll platforms down as player climbs
-      if (player.y < 200) {
-        player.y = 200;
-        score++;
-        platforms.forEach(p => p.y += Math.abs(player.dy));
-      }
+      function update() {
+        if (gameOver) return;
 
-      // Remove platforms off screen, add new ones with rest spot chance
-      platforms = platforms.filter(p => p.y < 600);
-      while (platforms.length < 6) {
-        platforms.push({
-          x: Math.random() * 350,
-          y: -10,
-          width: 50,
-          height: 10,
-          isRestSpot: Math.random() < 0.3
+        if ((keys["ArrowLeft"] || keys["ArrowRight"]) && stamina > 0) {
+          stamina -= staminaDrainRate;
+          if (stamina < 0) stamina = 0;
+        }
+
+        if (stamina > 0) {
+          if (keys["ArrowLeft"]) player.x -= 3;
+          if (keys["ArrowRight"]) player.x += 3;
+        }
+
+        player.dy += 0.3;
+        player.y += player.dy;
+
+        let onPlatform = false;
+        platforms.forEach((p) => {
+          if (
+            player.x < p.x + p.width &&
+            player.x + player.width > p.x &&
+            player.y + player.height > p.y &&
+            player.y + player.height < p.y + p.height + player.dy
+          ) {
+            player.dy = -8;
+            onPlatform = true;
+
+            if (p.isRestSpot) {
+              stamina += staminaRecoverRate;
+              if (stamina > maxStamina) stamina = maxStamina;
+            }
+          }
         });
+
+        if (keys["Space"] && stamina >= staminaJumpCost && onPlatform) {
+          player.dy = -12;
+          stamina -= staminaJumpCost;
+        }
+
+        if (player.y < 200) {
+          player.y = 200;
+          score++;
+          platforms.forEach((p) => (p.y += Math.abs(player.dy)));
+        }
+
+        platforms = platforms.filter((p) => p.y < 600);
+        while (platforms.length < 6) {
+          platforms.push({
+            x: Math.random() * 350,
+            y: -10,
+            width: 50,
+            height: 10,
+            isRestSpot: Math.random() < 0.3,
+          });
+        }
+
+        if (player.y > 600) {
+          endGame();
+        }
+
+        staminaBar.style.width = (stamina / maxStamina) * 100 + "%";
       }
 
-      // Game Over if player falls
-      if (player.y > 600) {
-        endGame();
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "red";
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+
+        platforms.forEach((p) => {
+          ctx.fillStyle = p.isRestSpot ? restSpotColor : normalPlatformColor;
+          ctx.fillRect(p.x, p.y, p.width, p.height);
+        });
+
+        ctx.fillStyle = "black";
+        ctx.font = "20px Arial";
+        ctx.fillText("Score: " + score, 10, 20);
+
+        ctx.fillStyle = "black";
+        ctx.font = "16px Arial";
+        ctx.fillText("Stamina", 10, 45);
       }
 
-      // Update stamina bar width
-      staminaBar.style.width = (stamina / maxStamina * 100) + "%";
-    }
+      function endGame() {
+        gameOver = true;
+        finalScoreDisplay.textContent = "Score: " + score;
+        overlay.style.display = "flex";
+      }
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      function gameLoop() {
+        update();
+        draw();
+        if (!gameOver) requestAnimationFrame(gameLoop);
+      }
 
-      // Draw player (simple rectangle for now)
-      ctx.fillStyle = "red";
-      ctx.fillRect(player.x, player.y, player.width, player.height);
-
-      // Draw platforms
-      platforms.forEach(p => {
-        ctx.fillStyle = p.isRestSpot ? restSpotColor : normalPlatformColor;
-        ctx.fillRect(p.x, p.y, p.width, p.height);
-      });
-
-      // Draw score
-      ctx.fillStyle = "black";
-      ctx.font = "20px Arial";
-      ctx.fillText("Score: " + score, 10, 20);
-
-      // Draw stamina text (optional)
-      ctx.fillStyle = "black";
-      ctx.font = "16px Arial";
-      ctx.fillText("Stamina", 10, 45);
-    }
-
-    function endGame() {
-      gameOver = true;
-      finalScoreDisplay.textContent = "Score: " + score;
-      overlay.style.display = "flex";
-    }
-
-    function gameLoop() {
-      update();
-      draw();
-      if (!gameOver) requestAnimationFrame(gameLoop);
-    }
-
-    startGame();
+      startGame();
+    };
   </script>
 </body>
 </html>
